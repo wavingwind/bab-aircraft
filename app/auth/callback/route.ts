@@ -7,13 +7,14 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
 
   if (code) {
+    // Next.js 15/16 규격에 맞게 쿠키 저장소 생성
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    // 코드를 사용하여 세션을 확정합니다.
+    // 인증 코드를 세션으로 교환
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  // 인증이 끝나면 로그인 창이 아닌 '홈(/)'으로 바로 보냅니다!
-  return NextResponse.redirect(new URL('/', request.url));
+  // 인증 완료 후 홈 화면으로 리다이렉트
+  return NextResponse.redirect(requestUrl.origin);
 }
