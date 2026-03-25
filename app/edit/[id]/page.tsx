@@ -22,7 +22,7 @@ export default function EditRaid() {
     meetingDate: '',
     isDateTBD: false, // ✨ 날짜 미정 상태 추가
     timeCategory: '점심',
-    availableTimes: [] as any[],
+    availableTimes: [] as boolean[],
     imageUrl: ''
   });
 

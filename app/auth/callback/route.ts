@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/';
 
   if (code) {
-    const supabase = createClient();
+    cconst supabase = await createClient(); // ✅ 여기도 await를 꼭 붙여주세요!
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);

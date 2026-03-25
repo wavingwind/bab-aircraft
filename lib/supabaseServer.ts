@@ -1,8 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() { // ✅ async 추가
+  const cookieStore = await cookies(); // ✅ await 추가 (Next.js 15+ 대응)
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,7 +18,7 @@ export function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // 서버 컴포넌트에서 호출될 때를 대비
+            // 서버 컴포넌트 내부에서 호출될 때를 대비한 예외 처리
           }
         },
       },
