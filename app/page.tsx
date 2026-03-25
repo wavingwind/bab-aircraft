@@ -94,12 +94,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* ✈️ 상단 헤더 */}
-      <div className="text-center mb-10 pb-6">
-        <h1 className="text-3xl font-black text-orange-500 italic tracking-tighter mb-1">BAB-AIRCRAFT</h1>
-        <p className="text-[10px] text-gray-300 font-black uppercase tracking-[0.4em] ml-1">Meal Crew Terminal</p>
-      </div>
-
       {/* 🚀 리스트 영역 */}
       <div className="space-y-8">
         {raids.map((raid) => {

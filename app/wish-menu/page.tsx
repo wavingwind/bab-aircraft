@@ -76,7 +76,7 @@ export default function WishMenuPage() {
     <div className="max-w-md mx-auto p-6 bg-gray-50 min-h-screen pb-40">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-black text-orange-500 italic tracking-tighter mb-1 uppercase">WISH MENU</h1>
-        <p className="text-[10px] text-gray-300 font-black uppercase tracking-[0.4em] ml-1">오늘 뭐 먹지? 투표해봐요</p>
+        <p className="text-[10px] text-gray-300 font-black uppercase tracking-[0.4em] ml-1">먹고싶은 메뉴를 올려주세요</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

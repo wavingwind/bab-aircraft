@@ -8,10 +8,10 @@ export default function Navbar() {
         {/* ✈️ 로고 영역 */}
         <Link href="/" className="flex flex-col items-start">
           <h1 className="text-xl font-black text-orange-500 italic tracking-tighter leading-none">
-            BAB-AIRCRAFT
+            밥항공기
           </h1>
           <span className="text-[8px] text-gray-300 font-black uppercase tracking-[0.3em]">
-            Meal Crew Terminal
+            bab-aircraft
           </span>
         </Link>
 
