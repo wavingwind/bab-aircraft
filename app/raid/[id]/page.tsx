@@ -82,6 +82,35 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
     }
   }
 
+  /**
+   * 🌡️ 온도계 배열(boolean[])을 시간 문자열로 변환하는 함수
+   * ✅ 수정: 시작 시간을 새벽 5시(05:00)로 설정합니다.
+   */
+  const parseTemperatureTime = (timeMask: any) => {
+    if (!timeMask || !Array.isArray(timeMask)) return "시간 미정";
+
+    const START_HOUR = 5; // 온도계의 시작 시간은 05시
+
+    // true인 인덱스들을 모두 찾음 (예: [14, 15])
+    const activeIndexes = timeMask
+      .map((val, idx) => (val === true ? idx : null))
+      .filter((val) => val !== null) as number[];
+
+    if (activeIndexes.length === 0) return "시간 미정";
+
+    // 인덱스에 시작 시간을 더해서 실제 시간을 계산 (예: 14 -> 19시)
+    const startTime = activeIndexes[0] + START_HOUR;
+    const endTime = activeIndexes[activeIndexes.length - 1] + START_HOUR;
+
+    if (startTime === endTime) {
+      // 단일 시간일 경우 (예: "19:00")
+      return `${String(startTime).padStart(2, '0')}:00`;
+    } else {
+      // 시간 범위일 경우 (예: "19:00 ~ 21:00")
+      return `${String(startTime).padStart(2, '0')}:00 ~ ${String(endTime + 1).padStart(2, '0')}:00`;
+    }
+  };
+
   const handleJoin = async () => {
     if (!guestName.trim()) {
       alert("이름을 입력해주세요.");
@@ -129,7 +158,6 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
   return (
     <div className="max-w-md mx-auto p-6 bg-[#0F172A] min-h-screen text-white font-sans pb-40">
       
-      {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <Link href="/" className="text-slate-400 font-bold hover:text-white text-xs uppercase tracking-widest">← 목록으로</Link>
         {isCaptain && (
@@ -137,7 +165,6 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
         )}
       </div>
 
-      {/* 맛집 이미지 영역 */}
       <div className="mb-6 rounded-[35px] overflow-hidden shadow-2xl border border-white/5 h-64 relative bg-slate-800">
         {raid?.image_url ? (
           <img src={raid.image_url} alt={raid?.store_name} className="w-full h-full object-cover" />
@@ -155,13 +182,13 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
-      {/* 상세 정보 카드 */}
       <div className="mb-8 bg-slate-800/30 p-8 rounded-[35px] border border-white/5 shadow-2xl relative overflow-hidden">
         <div className="space-y-5">
           <div className="flex justify-between items-end border-b border-white/5 pb-2">
             <span className="text-slate-500 font-bold text-[10px] italic uppercase tracking-widest">모이는 시간</span>
             <span className="font-black text-orange-500 italic text-xl tracking-tighter">
-              {raid?.meeting_time ? new Date(raid.meeting_time).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "시간 미정"} 
+              {/* ✅ 수정한 온도계 해석 함수 적용 */}
+              {parseTemperatureTime(raid?.time_mask)}
             </span>
           </div>
           
@@ -185,7 +212,6 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
 
-      {/* 참가자 명단 카드 (잠금 로직 포함) */}
       <div className="bg-[#1E293B] rounded-[40px] p-8 shadow-2xl border border-white/5">
         <div className="flex justify-between items-start mb-6">
           <div>
