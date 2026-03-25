@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export async function createClient() { // ✅ async 추가
+export async function await createClient() { // ✅ async 추가
   const cookieStore = await cookies(); // ✅ await 추가 (Next.js 15+ 대응)
 
   return createServerClient(
