@@ -13,7 +13,7 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
   const [raid, setRaid] = useState<any>(null);
   const [participants, setParticipants] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
-  const [captainName, setCaptainName] = useState<string>("LOADING..."); 
+  const [captainName, setCaptainName] = useState<string>("로딩 중..."); 
   const [loading, setLoading] = useState(true);
 
   const [guestName, setGuestName] = useState("");
@@ -50,10 +50,9 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
           .select('full_name')
           .eq('id', raidData.creator_id)
           .single();
-        setCaptainName(profile?.full_name || "UNKNOWN CAPTAIN");
+        setCaptainName(profile?.full_name || "알 수 없는 파티장");
       }
 
-      // 실시간 참가자 명단 가져오기
       const { data: parts } = await supabase
         .from('participants')
         .select('*')
@@ -63,17 +62,12 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
       const currentParticipants = parts || [];
       setParticipants(currentParticipants);
 
-      // ✅ [핵심 로직] 세션 기록이 있더라도, 실시간 명단에 없으면 '참가 안 함'으로 간주 (강퇴 대응)
       const sessionFlag = sessionStorage.getItem(`joined_raid_${raidId}`) === 'true';
-      
-      // 로그인 유저라면 ID로, 게스트라면 세션 플래그와 명단 존재 여부로 확인
       const isStillInList = currentParticipants.some(p => {
         if (currentUser && p.user_id === currentUser.id) return true;
-        // 게스트의 경우, 세션 플래그가 있고 명단에 본인이 있는지 확인 (이름 입력이 없으므로 세션 유효성만 체크)
         return !p.user_id && sessionFlag; 
       });
 
-      // 만약 세션에는 참가했다고 되어있는데 명단에 내가 없다면 (강퇴당함) -> 세션 초기화
       if (sessionFlag && !isStillInList) {
         sessionStorage.removeItem(`joined_raid_${raidId}`);
         setHasJoinedAsGuest(false);
@@ -117,48 +111,66 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
   };
 
   const handleRemove = async (id: string) => {
-    if (!confirm("이 승객을 강제 하차(KICK) 시키겠습니까?")) return;
+    if (!confirm("이 멤버를 강퇴하시겠습니까?")) return;
     try {
       await supabase.from('participants').delete().eq('id', id);
-      await fetchRaidData(); // 삭제 후 즉시 갱신
+      await fetchRaidData(); 
     } catch (err: any) {
-      alert("KICK 실패");
+      alert("강퇴 실패");
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-orange-500 font-black italic animate-pulse">SYNCING DATA...</div>;
+  if (loading) return <div className="min-h-screen bg-[#0F172A] flex items-center justify-center text-orange-500 font-black italic animate-pulse">데이터 동기화 중...</div>;
 
   const isCaptain = user && raid && String(user.id) === String(raid.creator_id);
   const isRegisteredUser = user && participants.some(p => p.user_id && String(p.user_id) === String(user.id));
-  
-  // ✅ 최종 판별: 방장이거나 명단에 실시간으로 존재하는 경우에만 버튼 노출
   const showChatButton = isCaptain || isRegisteredUser || hasJoinedAsGuest;
 
   return (
     <div className="max-w-md mx-auto p-6 bg-[#0F172A] min-h-screen text-white font-sans pb-40">
       
-      <div className="flex justify-between items-center mb-10">
-        <Link href="/" className="text-slate-400 font-bold hover:text-white text-xs uppercase tracking-widest">← TERMINAL</Link>
+      <div className="flex justify-between items-center mb-6">
+        <Link href="/" className="text-slate-400 font-bold hover:text-white text-xs uppercase tracking-widest">← 목록으로</Link>
         {isCaptain && (
           <Link href={`/raid/${raidId}/edit`} className="text-[12px] bg-slate-700/50 text-slate-300 px-5 py-2 rounded-full font-black uppercase border border-white/10">수정</Link>
         )}
       </div>
 
-      <div className="mb-10 bg-slate-800/30 p-8 rounded-[35px] border border-white/5 shadow-2xl relative overflow-hidden">
-        <h1 className="text-3xl font-black italic mb-8 text-slate-100 uppercase tracking-tighter leading-tight">
-          {raid?.store_name} 레이드
-        </h1>
-        
+      {/* 📸 맛집 이미지 영역 */}
+      <div className="mb-6 rounded-[35px] overflow-hidden shadow-2xl border border-white/5 h-64 relative bg-slate-800">
+        {raid?.image_url ? (
+          <img 
+            src={raid.image_url} 
+            alt={raid?.store_name} 
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900">
+            <span className="text-6xl mb-2">😋</span>
+            <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">No Image Provided</span>
+          </div>
+        )}
+        {/* 이미지 위 텍스트 가독성을 위한 그라데이션 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        <div className="absolute bottom-6 left-6 right-6">
+          <h1 className="text-3xl font-black italic text-white uppercase tracking-tighter leading-tight drop-shadow-lg">
+            {raid?.store_name}
+          </h1>
+        </div>
+      </div>
+
+      {/* 상세 정보 카드 */}
+      <div className="mb-8 bg-slate-800/30 p-8 rounded-[35px] border border-white/5 shadow-2xl relative overflow-hidden">
         <div className="space-y-5">
           <div className="flex justify-between items-end border-b border-white/5 pb-2">
-            <span className="text-slate-500 font-bold text-[10px] italic uppercase tracking-widest">Departure Time</span>
+            <span className="text-slate-500 font-bold text-[10px] italic uppercase tracking-widest">모이는 시간</span>
             <span className="font-black text-orange-500 italic text-xl tracking-tighter">
-              {raid?.meeting_time ? new Date(raid.meeting_time).toLocaleDateString() : "날짜 미정"} 
+              {raid?.meeting_time ? new Date(raid.meeting_time).toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "시간 미정"} 
             </span>
           </div>
           
           <div className="flex justify-between items-end border-b border-white/5 pb-2">
-            <span className="text-slate-500 font-bold text-[10px] italic uppercase tracking-widest">Destination</span>
+            <span className="text-slate-500 font-bold text-[10px] italic uppercase tracking-widest">장소</span>
             <span className="font-bold text-slate-100 text-lg">{raid?.store_name}</span>
           </div>
 
@@ -183,18 +195,19 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
                 disabled={isJoining}
                 className="w-full bg-orange-500 text-white py-5 rounded-[24px] font-black text-lg italic uppercase shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
               >
-                {isJoining ? 'REGISTERING...' : '레이드 참가하기'}
+                {isJoining ? '등록 중...' : '레이드 참가하기'}
               </button>
             </div>
           )}
         </div>
       </div>
 
+      {/* 참가자 명단 카드 */}
       <div className="bg-[#1E293B] rounded-[40px] p-8 shadow-2xl border border-white/5">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2 italic">Manifest</h3>
-            <h2 className="text-xl font-black text-orange-500 italic uppercase">👨‍✈️ Captain</h2>
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2 italic">Passengers</h3>
+            <h2 className="text-xl font-black text-orange-500 italic uppercase">파티장</h2>
           </div>
         </div>
 
@@ -203,7 +216,8 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
         </div>
 
         <div className="space-y-7">
-          {participants.length === 0 && <p className="text-slate-600 font-bold text-center py-4 italic">No passengers yet...</p>}
+          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] italic">참가 승객 목록</h3>
+          {participants.length === 0 && <p className="text-slate-600 font-bold text-center py-4 italic">아직 탑승객이 없습니다...</p>}
           {participants.map((p) => {
             const isSelf = user && p.user_id && String(p.user_id) === String(user.id);
             const isGuest = !p.user_id;
@@ -217,8 +231,8 @@ export default function RaidDetail({ params }: { params: Promise<{ id: string }>
                     <span className={`text-xl font-black italic uppercase ${isGuest ? 'text-slate-400' : 'text-slate-100'}`}>
                       {p.guest_name}
                     </span>
-                    {isGuest && <span className="text-[9px] bg-slate-700 text-slate-500 px-2 py-0.5 rounded-sm font-bold">GUEST</span>}
-                    {isSelf && <span className="text-[9px] bg-orange-500/20 text-orange-500 px-2 py-0.5 rounded-sm font-bold border border-orange-500/30">YOU</span>}
+                    {isGuest && <span className="text-[9px] bg-slate-700 text-slate-500 px-2 py-0.5 rounded-sm font-bold uppercase">Guest</span>}
+                    {isSelf && <span className="text-[9px] bg-orange-500/20 text-orange-500 px-2 py-0.5 rounded-sm font-bold border border-orange-500/30">You</span>}
                   </div>
                 </div>
                 {showKick && (
