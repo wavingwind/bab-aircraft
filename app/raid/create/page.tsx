@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import TimePicker from '@/components/TimePicker';
 import { supabase } from '@/lib/supabase';
@@ -10,7 +11,7 @@ export default function CreateRaid() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // ✅ formData 초기값에 mapLink: '' 를 추가하여 Controlled Input 에러를 방지했습니다.
+  // ✅ 수리 포인트: availableTimes를 'boolean[]' 타입으로 확실히 지정했습니다.
   const [formData, setFormData] = useState({
     storeName: '',
     menu: '',
@@ -19,8 +20,8 @@ export default function CreateRaid() {
     meetingDate: '',
     isDateTBD: false, 
     timeCategory: '점심',
-    availableTimes: [],
-    mapLink: '' // ✨ 초기값 설정 완료
+    availableTimes: [] as boolean[], // ✨ 이 부분이 빌드 에러를 잡는 핵심입니다!
+    mapLink: '' 
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,7 +60,7 @@ export default function CreateRaid() {
       // 📅 날짜 처리 로직
       const finalDateTime = formData.isDateTBD ? null : `${formData.meetingDate}T00:00:00`;
 
-      // 🚀 DB 저장 (map_link 추가됨)
+      // 🚀 DB 저장 (컬럼명은 기장님의 DB 규격인 store_name, meeting_time 등을 유지합니다)
       const { data, error } = await supabase
         .from('raids')
         .insert([
@@ -74,7 +75,7 @@ export default function CreateRaid() {
             creator_id: user.id,
             max_participants: formData.max_participants,
             image_url: imageUrl,
-            map_link: formData.mapLink, // ✨ 네이버 지도 링크 저장
+            map_link: formData.mapLink,
           },
         ])
         .select();
@@ -144,7 +145,6 @@ export default function CreateRaid() {
             onChange={(e) => setFormData({ ...formData, menu: e.target.value })}
           />
           
-          {/* 🗺️ 네이버 지도 링크 입력 필드 */}
           <div>
             <label className="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Naver Map Link (Optional)</label>
             <input
